@@ -30,6 +30,7 @@
     nightG = ac.createGain(); nightG.gain.value = 0; nightG.connect(master);
     A.ready = true;
   };
+  A.suspend = function () { if (ac && ac.state === 'running') ac.suspend(); };
   A.unlock = function () { if (ac && ac.state === 'suspended' && A.enabled) ac.resume(); };
   A.toggle = function () { A.enabled = !A.enabled; if (master) master.gain.value = A.enabled ? 0.55 : 0; if (A.enabled) A.init(); return A.enabled; };
   A.setEnabled = function (on) { A.enabled = on; if (master) master.gain.value = on ? 0.55 : 0; };

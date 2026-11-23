@@ -190,6 +190,11 @@
   // ------------------------------------------------------------ playback loop
   const MIN_PER_SEC = { 1: 12, 2: 26, 4: 60 };
   function tick(ts) {
+    // Battery: full frame rate only while something moves; ~15 fps while waiting on a
+    // decision (stars, rain and headlamps still drift); nothing while the page is hidden.
+    const busy = app.play || app.flash || app.momentOpen;
+    const minGap = document.hidden ? Infinity : busy ? 0 : app.screen === 'race' ? 66 : app.screen === 'title' ? 33 : Infinity;
+    if (ts - (app.lastTick || 0) < minGap) { requestAnimationFrame(tick); return; }
     const dt = Math.min(0.1, (ts - (app.lastTick || ts)) / 1000);
     app.lastTick = ts; app.anim += dt;
     if (app.screen === 'title') {
@@ -810,6 +815,10 @@
       const ro = new ResizeObserver(() => { RND.resize(); PROF.resize(); });
       ro.observe($('#view')); ro.observe($('#profile-wrap'));
     }
+    // phones kill background tabs: save whenever we're hidden, and stop the sound
+    const onHide = () => { if (document.hidden) { if (app.screen === 'race' && app.R && app.R.s.phase !== 'done') save(); AU.suspend(); } else AU.unlock(); };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', () => { if (app.screen === 'race' && app.R && app.R.s.phase !== 'done') save(); });
     $('#btn-log').onclick = () => { $('#side-extra').classList.toggle('open'); const l = $('#log'); l.scrollTop = l.scrollHeight; };
     $('#btn-log-close').onclick = () => $('#side-extra').classList.remove('open');
     show('title');
