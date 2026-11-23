@@ -103,6 +103,9 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: v
 #side { grid-area: side; background: #10151d; border-left: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; }
 .side-group { padding: 10px 12px 8px; border-bottom: 1px solid var(--line); }
 .side-group.grow { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#side-extra { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.drawer-head { display: none; }
+#btn-log { display: none; }
 .side-group h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--body); margin-bottom: 6px; }
 .side-group h4.mind-h { color: var(--mind); }
 .bar { display: grid; grid-template-columns: 74px 1fr 30px; align-items: center; gap: 6px; margin: 3px 0; cursor: help; font-size: 12px; }
@@ -239,4 +242,141 @@ button.dnf.tempt { background: rgba(255,107,94,.15); border-color: var(--bad); c
   #screen-race.active { grid-template-columns: 1fr 250px; }
   .efforts { grid-template-columns: repeat(2, 1fr); }
   .hud-item.wide { min-width: 170px; }
+}
+
+
+/* ======================================================================
+   Phones and small tablets. `.compact` is set from JS for a narrow
+   portrait screen or a short landscape one; the grids differ per
+   orientation below, everything else is shared.
+   ====================================================================== */
+.compact body { font-size: 13.5px; }
+.compact button { min-height: 40px; }
+.compact .screen { height: 100%; }
+
+/* --- other screens: one column, full screen, safe areas */
+.compact .title-card h1 { font-size: clamp(44px, 13vw, 76px); }
+.compact .tagline { font-size: 16px; }
+.compact .title-buttons { flex-wrap: wrap; }
+.compact .paper, .compact .paper.wide {
+  position: absolute; inset: 0; transform: none; width: auto; max-height: none; border-radius: 0; border: 0;
+  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+.compact .howto-grid, .compact .brief-cols, .compact .rep-cols { grid-template-columns: 1fr; gap: 6px; }
+.compact .drop-list { grid-template-columns: 1fr 1fr; }
+.compact .drop-item { min-height: 44px; }
+.compact .drop-item .d { display: none; }
+.drop-detail { display: none; }
+.compact .drop-detail { display: block; grid-column: 1 / -1; font-size: 12px; color: var(--dim); margin: 2px 0 6px; min-height: 2.6em; }
+.compact .brief-foot { position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom)); background: var(--panel); padding: 10px 0 calc(6px + env(safe-area-inset-bottom)); margin-top: 12px; }
+.compact .brief-foot button { flex: 1; }
+.compact .report #rep-head { flex-direction: column; align-items: flex-start; }
+.compact .report .stats { text-align: left; }
+.compact .report .verdict { font-size: 28px; }
+.compact #rep-chart { height: 180px; }
+.compact .modal-card { width: min(560px, 94vw); padding: 18px; }
+.compact .modal-card .row button { flex: 1; }
+
+/* --- race screen pieces */
+.compact #hud { gap: 0; padding: env(safe-area-inset-top) calc(6px + env(safe-area-inset-right)) 0 calc(6px + env(safe-area-inset-left)); min-height: 46px; }
+.compact .hud-item { padding: 0 8px; min-width: 0; }
+.compact .hud-item span { font-size: 14px; }
+.compact .hud-item.big span { font-size: 16px; }
+.compact .hud-item label { font-size: 9px; letter-spacing: .03em; white-space: nowrap; }
+.compact .hud-item.wide { min-width: 0; flex: 1; overflow: hidden; }
+.compact .hud-item.wide span, .compact .hud-item.wide label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.compact .hud-item.wide span { font-size: 12.5px; }
+.compact #hud-wx-item, .compact .hud-spacer, .compact #btn-speed, .compact #btn-sound, .compact #hud-elapsed { display: none; }
+.compact #btn-log { display: inline-block; }
+.compact .hud-controls { gap: 4px; }
+.compact .hud-controls button { min-height: 36px; padding: 4px 9px; }
+
+/* vitals: all nine bars as a compact tappable grid */
+.compact #side { border-left: 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 10px; padding: 6px 10px 7px; overflow: visible; }
+.compact #side > .side-group { display: contents; }
+.compact #side h4 { display: none; }
+.compact #bars-body, .compact #bars-mind { display: contents; }
+.compact .bar { grid-template-columns: 1fr auto; grid-template-rows: auto 5px; gap: 1px 4px; margin: 0; font-size: 10.5px; cursor: pointer; }
+.compact .bar .lbl { grid-row: 1; grid-column: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.compact .bar .val { grid-row: 1; grid-column: 2; }
+.compact .bar .track { grid-row: 2; grid-column: 1 / -1; height: 5px; }
+.compact .bar .val { font-size: 10px; }
+
+/* kit and log: a drawer */
+.compact #side-extra {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 90vw); z-index: 80; background: #10151d;
+  border-left: 1px solid var(--line); box-shadow: -14px 0 40px rgba(0,0,0,.5);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) 0;
+  transform: translateX(105%); transition: transform .25s;
+}
+.compact #side-extra.open { transform: none; }
+.compact .drawer-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.compact #side-extra .side-group { border-bottom: 1px solid var(--line); }
+
+/* decision panel: scrolls; the main button stays reachable */
+.compact #panel { padding: 10px 12px 0; }
+.compact .dec-head { flex-direction: column; gap: 4px; }
+.compact .proj { text-align: left; max-width: none; }
+.compact h2 { font-size: 19px; }
+.compact .sec-text { font-size: 14px; margin: 4px 0 8px; }
+.compact .efforts { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.compact .effort { min-height: 0; padding: 7px 9px; }
+.compact .effort .k, .compact .effort .hint { display: none; }
+.compact .effort .costs { font-size: 11px; }
+.compact .sel-hint { display: block; font-size: 12px; color: var(--dim); margin: 6px 0 0; }
+.compact .plans { gap: 8px; margin-top: 8px; }
+.compact .seg { flex-wrap: wrap; width: 100%; }
+.compact .seg label { width: 100%; margin: 0 0 3px; }
+.compact .seg button { flex: 1; padding: 6px 4px; }
+.compact .seg .note { width: 100%; margin: 3px 0 0; }
+.compact .quick { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.compact .quick label { display: none; }
+.compact .quick button { flex: 0 0 auto; max-width: 180px; white-space: normal; text-align: left; }
+.compact .go-row, .compact .aid-foot {
+  position: sticky; bottom: 0; z-index: 2; background: var(--panel); margin: 10px -12px 0; padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+}
+.compact .go-row button.go { flex: 1; }
+.compact .go-row .forced { flex: 2; }
+.compact .event .ev-text { font-size: 15px; }
+.compact .choices { max-width: none; }
+.compact .choice { width: 100%; }
+.compact .choice .d { display: block; margin: 2px 0 0; }
+.compact .event { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+.compact .aid { grid-template-columns: 1fr; gap: 10px; }
+.compact .aid-group > label { width: 100%; }
+.compact .aid-act { flex: 1 1 calc(50% - 5px); }
+.compact .aid-foot { flex-wrap: wrap; }
+.compact .aid-foot > .dim { display: none; }
+.compact .aid-foot button { flex: 1; }
+
+/* moments take the whole screen on a phone: the scene box is too small */
+.compact #moment { position: fixed; z-index: 60; padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom); overflow-y: auto; background: radial-gradient(ellipse at center, rgba(8,11,18,.82), rgba(4,6,10,.95)); }
+.compact #moment.low { background: radial-gradient(ellipse at center, rgba(6,6,10,.9), rgba(0,0,0,.97)); }
+.compact .moment-inner { width: 100%; max-width: 620px; margin: auto; padding: 16px 0; }
+.compact .moment-inner h2 { font-size: 30px; }
+.compact .moment-inner p { font-size: 16px; line-height: 1.55; }
+.compact .moment-inner .choice { min-width: 0; width: 100%; }
+.compact #playbar { left: 8px; bottom: 8px; padding: 3px 4px 3px 10px; }
+.compact #tip { position: fixed; left: 10px; right: 10px; top: auto; bottom: calc(12px + env(safe-area-inset-bottom)); max-width: none; z-index: 70; }
+
+/* portrait phone: stacked */
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 521px) {
+  #screen-race.active {
+    grid-template-columns: 100%;
+    grid-template-rows: auto minmax(140px, 30vh) 44px auto minmax(0, 1fr);
+    grid-template-areas: "hud" "view" "prof" "side" "panel";
+  }
+  @supports (height: 1dvh) { #screen-race.active { grid-template-rows: auto minmax(140px, 30dvh) 44px auto minmax(0, 1fr); } }
+}
+/* phone on its side: scene left, decisions right */
+@media (max-height: 520px) and (orientation: landscape) {
+  #screen-race.active {
+    grid-template-columns: 52% 48%;
+    grid-template-rows: auto auto minmax(0, 1fr) 38px;
+    grid-template-areas: "hud hud" "view side" "view panel" "prof panel";
+  }
+  .compact #side { border-left: 1px solid var(--line); }
+  .compact #panel { border-left: 1px solid var(--line); }
+  .compact .dec-head .proj { font-size: 11px; }
 }

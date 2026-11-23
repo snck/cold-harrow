@@ -203,7 +203,7 @@
 
     // other runners
     const dark = env.dark;
-    const near = (v.nearby || []).slice().sort((a, b) => Math.abs(a.km - v.km) - Math.abs(b.km - v.km)).slice(0, 22);
+    const near = (v.nearby || []).slice().sort((a, b) => Math.abs(a.km - v.km) - Math.abs(b.km - v.km)).slice(0, W < 600 ? 12 : 22);
     for (const o of near) {
       const x = px0 + (o.km - v.km) * pxPerKm;
       if (x < -20 || x > W + 20) continue;
@@ -220,8 +220,9 @@
     const grade = (S.elevAt(v.km + 0.05) - S.elevAt(v.km - 0.05)) / 100;
     drawRunner(px0, py0, grade, v.anim * (v.moving ? 1 : 0.12), { scale: 1.1, shirt: [235, 110, 40], dark, light, lamp: dark, player: true, battery: s.kit.battery, effort: v.effort });
     // a small marker so you can always find yourself
+    const mk = 50 * clamp(H / 420, 0.7, 1.15);
     ctx.fillStyle = 'rgba(255,170,90,0.9)';
-    ctx.beginPath(); ctx.moveTo(px0 + 1, py0 - 50); ctx.lineTo(px0 - 4, py0 - 57); ctx.lineTo(px0 + 6, py0 - 57); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(px0 + 1, py0 - mk); ctx.lineTo(px0 - 4, py0 - mk - 7); ctx.lineTo(px0 + 6, py0 - mk - 7); ctx.closePath(); ctx.fill();
 
     // weather overlays
     if (env.rain) {
@@ -271,7 +272,7 @@
   }
 
   function drawRunner(x, y, grade, phase, o) {
-    const sc = o.scale || 1;
+    const sc = (o.scale || 1) * clamp(H / 420, 0.7, 1.15);
     const lit = o.dark ? (o.player ? 0.6 : 0.35) : 1;
     const skin = mix([90, 70, 60], [214, 170, 140], lit);
     const shirt = mix([30, 30, 40], o.shirt, o.dark ? (o.player ? 0.85 : 0.45) : 1);
@@ -433,9 +434,11 @@
         c.beginPath(); c.moveTo(x, yE(S.elevAt(n.km))); c.lineTo(x, bot + 2); c.stroke();
         c.fillStyle = n.type === 'water' ? '#7cc0f0' : '#f5f0e6';
         c.beginPath(); c.arc(x, yE(S.elevAt(n.km)), 3, 0, Math.PI * 2); c.fill();
-        if (n.type !== 'water') {
+        if (n.type !== 'water' && (PW >= 560 || n.type === 'finish')) {
           c.fillStyle = 'rgba(235,230,220,0.85)';
+          if (n.type === 'finish') c.textAlign = 'right';
           c.fillText(n.type === 'finish' ? 'Finish' : n.name, x, PH - 3);
+          c.textAlign = 'center';
         }
       }
     }
@@ -444,8 +447,9 @@
       const x = xk(f.km), y = yE(S.elevAt(f.km));
       c.fillStyle = f.big ? '#ffd38a' : 'rgba(255,230,180,0.7)';
       c.beginPath(); c.moveTo(x, y - 9); c.lineTo(x - 3, y - 4); c.lineTo(x + 3, y - 4); c.closePath(); c.fill();
-      if (f.big) c.fillText('Crown 2,140 m', x, top - 4);
+      if (f.big) c.fillText(PW >= 560 ? 'Crown 2,140 m' : 'Crown', x, top - 4);
     }
+    if (PW < 560) { drawPlayerMark(); return; }
     const oven = C.SECTIONS.find((x) => x.id === 'oven');
     c.fillStyle = 'rgba(255,170,90,0.85)'; c.fillText('the Oven', xk((oven.from + oven.to) / 2 + 2), top + 18);
     const lie = C.SECTIONS.find((x) => x.id === 'lastlie');
@@ -455,8 +459,9 @@
       c.fillStyle = 'rgba(255,255,255,0.35)';
       for (const r of opts.runners) { if (r.km < 0 || r.km > 100) continue; c.fillRect(xk(r.km) - 0.5, bot - 5, 1, 5); }
     }
-    // the player
-    if (st) {
+    drawPlayerMark();
+    function drawPlayerMark() {
+      if (!st) return;
       const x = xk(km), y = yE(S.elevAt(km));
       c.fillStyle = '#ff8a3d'; c.strokeStyle = '#fff'; c.lineWidth = 1.5;
       c.beginPath(); c.arc(x, y, 4.5, 0, Math.PI * 2); c.fill(); c.stroke();
@@ -484,7 +489,8 @@
     c.fillStyle = 'rgba(255,255,255,0.45)'; c.font = '10px system-ui, sans-serif'; c.textAlign = 'right';
     for (const v of [0, 25, 50, 75, 100]) { c.beginPath(); c.moveTo(x0, yv(v)); c.lineTo(x1, yv(v)); c.stroke(); c.fillText(v, x0 - 5, yv(v) + 3); }
     c.textAlign = 'center';
-    for (let k = 0; k <= 100; k += 10) c.fillText(k + ' km', xk(k), h - 10);
+    const step = w < 520 ? 20 : 10;
+    for (let k = 0; k <= 100; k += step) c.fillText(k + (k === 0 || w >= 520 ? ' km' : ''), xk(k), h - 10);
     // aid station lines
     for (const n of C.NODES) if (n.type === 'aid') { c.strokeStyle = 'rgba(255,255,255,0.12)'; c.setLineDash([2, 3]); c.beginPath(); c.moveTo(xk(n.km), y0); c.lineTo(xk(n.km), y1); c.stroke(); c.setLineDash([]); }
     const series = [

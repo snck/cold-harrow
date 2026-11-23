@@ -9,6 +9,14 @@
   // Touch devices (or ?touch=1 for testing) get tap equivalents for everything that is hover on desktop.
   const TOUCH = (window.matchMedia && matchMedia('(hover: none), (pointer: coarse)').matches) || /[?&]touch=1/.test(location.search);
   document.documentElement.classList.toggle('touch', TOUCH);
+  // Phone-sized layouts (portrait, or a short landscape screen) share the 'compact' class.
+  const COMPACT_Q = window.matchMedia ? matchMedia('(max-width: 760px), (max-height: 520px) and (orientation: landscape)') : null;
+  function updateLayout() {
+    const c = !!(COMPACT_Q && COMPACT_Q.matches);
+    document.documentElement.classList.toggle('compact', c);
+    if (!c) $('#side-extra') && $('#side-extra').classList.remove('open');
+  }
+  updateLayout();
 
   // ------------------------------------------------------------ storage (never required)
   const store = {
@@ -71,7 +79,7 @@
       const r = cv.getBoundingClientRect(); const dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = r.width * dpr; cv.height = r.height * dpr;
       const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const W = r.width, H = r.height, x0 = 6, x1 = W - 6, top = 22, bot = H - 18;
+      const W = r.width, H = r.height, narrow = W < 560, x0 = 6, x1 = W - 6, top = narrow ? 34 : 22, bot = H - 18;
       const xk = (k) => x0 + (x1 - x0) * k / 100, yE = (e) => bot - (e - 300) / 1900 * (bot - top);
       const g = c.createLinearGradient(0, top, 0, bot); g.addColorStop(0, '#8aa4b8'); g.addColorStop(1, '#26323d');
       c.fillStyle = g; c.beginPath(); c.moveTo(xk(0), bot);
@@ -81,23 +89,30 @@
       for (const n of C.NODES) {
         if (n.type !== 'aid' && n.type !== 'finish' && n.type !== 'start') continue;
         const x = xk(n.km); c.strokeStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.moveTo(x, yE(S.elevAt(n.km))); c.lineTo(x, bot); c.stroke();
+        if (narrow && n.type === 'aid') continue; // names don't fit; the cutoff table lists them
         c.fillStyle = '#e9e4da'; c.textAlign = n.type === 'start' ? 'left' : n.type === 'finish' ? 'right' : 'center'; c.fillText(n.type === 'start' ? 'Start' : n.type === 'finish' ? 'Finish' : n.name, x, H - 5); c.textAlign = 'center';
       }
       const label = (km, t, col) => { c.fillStyle = col; c.fillText(t, xk(km), yE(S.elevAt(km)) - 7); };
-      label(10, 'Witchknee', '#ffe3b5'); label(38, 'the Crown 2,140 m', '#ffd38a'); label(44, 'Scree Staircase', '#ffb3a0');
-      label(67, 'the Oven', '#ffb07a'); label(90, 'the Last Lie', '#ffc9b5');
+      if (narrow) { label(38, 'the Crown', '#ffd38a'); label(67, 'the Oven', '#ffb07a'); label(90, 'Last Lie', '#ffc9b5'); }
+      else {
+        label(10, 'Witchknee', '#ffe3b5'); label(38, 'the Crown 2,140 m', '#ffd38a'); label(44, 'Scree Staircase', '#ffb3a0');
+        label(67, 'the Oven', '#ffb07a'); label(90, 'the Last Lie', '#ffc9b5');
+      }
       c.fillStyle = 'rgba(255,255,255,.55)'; c.textAlign = 'left'; c.fillText(`${S.TOTAL_GAIN.toLocaleString()} m of climbing`, 8, 12);
     });
   }
   function renderDrops() {
     for (const bag of ['hollin', 'mill']) {
       const el = $('#drop-' + bag);
-      el.innerHTML = Object.entries(C.DROP_ITEMS).map(([id, it]) => `<button class="drop-item ${app.setup.drops[bag].includes(id) ? 'sel' : ''}" data-bag="${bag}" data-id="${id}">${esc(it.name)}<span class="d">${esc(it.desc)}</span></button>`).join('');
+      const last = app.dropDetail && app.dropDetail[bag];
+      el.innerHTML = Object.entries(C.DROP_ITEMS).map(([id, it]) => `<button class="drop-item ${app.setup.drops[bag].includes(id) ? 'sel' : ''}" data-bag="${bag}" data-id="${id}">${esc(it.name)}<span class="d">${esc(it.desc)}</span></button>`).join('')
+        + `<p class="drop-detail">${last ? `<b>${esc(C.DROP_ITEMS[last].name)}:</b> ${esc(C.DROP_ITEMS[last].desc)}` : 'Tap an item to pack it. Tap it again to unpack it.'}</p>`;
     }
     $$('.drop-item').forEach((b) => b.onclick = () => {
       const list = app.setup.drops[b.dataset.bag];
       const i = list.indexOf(b.dataset.id);
       if (i >= 0) list.splice(i, 1); else { if (list.length >= 3) list.shift(); list.push(b.dataset.id); }
+      app.dropDetail = Object.assign(app.dropDetail || {}, { [b.dataset.bag]: b.dataset.id });
       renderDrops();
     });
   }
@@ -223,13 +238,15 @@
     $('#hud-km').textContent = v.km.toFixed(1);
     $('#hud-pos').textContent = v.rank ? v.rank : '-';
     const fs = S.fieldStats({ s: Object.assign({}, s, { t: v.t }), field: app.R.field });
-    $('#hud-field').textContent = `position · ${fs.active + fs.finished + 1} still in`;
+    const inRace = fs.active + fs.finished + 1;
+    $('#hud-field').textContent = document.documentElement.classList.contains('compact') ? `of ${inRace}` : `position · ${inRace} still in`;
     const na = S.nextAid(v.km);
     if (s.phase === 'done' && s.outcome) {
       $('#hud-next').textContent = s.outcome.kind === 'finish' ? 'Finished' : 'Race over';
       $('#hud-cut').textContent = s.outcome.kind === 'finish' ? S.durStr(s.outcome.t) : s.outcome.why;
     } else if (na) {
-      $('#hud-next').textContent = `${na.type === 'finish' ? 'Finish' : na.name} in ${(na.km - v.km).toFixed(1)} km`;
+      const nm = na.type === 'finish' ? 'Finish' : na.name, dist = (na.km - v.km).toFixed(1);
+      $('#hud-next').textContent = document.documentElement.classList.contains('compact') ? `${dist} km · ${nm}` : `${nm} in ${dist} km`;
       $('#hud-cut').textContent = na.cutoff ? `cutoff ${S.clockStr(na.cutoff)}` : 'next aid';
     }
     const env = S.envAt(s, clamp(v.km, 0, 99.99), v.t);
@@ -764,6 +781,7 @@
   // ------------------------------------------------------------ wiring
   function wire() {
     buildBars();
+    if (TOUCH) $('#title-input').textContent = 'Made for touch too. Nothing is timed: take as long as you like over every decision.';
     $('#btn-new').onclick = () => { AU.init(); openBriefing(); };
     $('#btn-continue').onclick = () => { AU.init(); continueRace(); };
     $('#btn-howto').onclick = () => { app.helpFrom = 'title'; show('howto'); };
@@ -786,7 +804,14 @@
     $('#btn-menu').onclick = menu;
     AU.setEnabled(store.get('sound', true));
     $('#btn-sound').style.opacity = AU.enabled ? 1 : 0.4;
-    window.addEventListener('resize', () => { RND.resize(); PROF.resize(); });
+    window.addEventListener('resize', () => { updateLayout(); RND.resize(); PROF.resize(); });
+    // the grid changes shape on rotation; keep the canvases matched to their boxes
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => { RND.resize(); PROF.resize(); });
+      ro.observe($('#view')); ro.observe($('#profile-wrap'));
+    }
+    $('#btn-log').onclick = () => { $('#side-extra').classList.toggle('open'); const l = $('#log'); l.scrollTop = l.scrollHeight; };
+    $('#btn-log-close').onclick = () => $('#side-extra').classList.remove('open');
     show('title');
     requestAnimationFrame(tick);
   }

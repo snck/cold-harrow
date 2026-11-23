@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coldharrow device check</title>
+<style>
+  /* Dev tool: shows the game at several screen sizes at once. Each iframe gets its own
+     viewport, so the game's media queries behave as on the real device. */
+  body { margin: 0; padding: 12px; background: #222; color: #ddd; font: 12px system-ui, sans-serif; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  figure { margin: 0; }
+  figcaption { margin-bottom: 4px; }
+  .frame { overflow: hidden; border: 1px solid #555; background: #000; }
+  iframe { border: 0; transform-origin: 0 0; display: block; }
+</style>
+</head>
+<body>
+<p>Query: <code>?scale=0.5&amp;path=/index.html?touch=1&amp;only=se,se-land</code></p>
+<div class="row" id="row"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const scale = +(q.get('scale') || 0.5);
+  const path = q.get('path') || '/index.html?touch=1';
+  const devices = {
+    'se': [375, 667, 'iPhone SE'], 'android-small': [360, 740, 'Small Android'], 'pixel': [412, 915, 'Pixel 7'],
+    'promax': [430, 932, 'iPhone Pro Max'], 'se-land': [667, 375, 'iPhone SE sideways'], 'pixel-land': [915, 412, 'Pixel 7 sideways'],
+    'ipad-mini': [768, 1024, 'iPad mini'], 'ipad-land': [1024, 768, 'iPad mini sideways']
+  };
+  const only = (q.get('only') || Object.keys(devices).join(',')).split(',');
+  for (const id of only) {
+    const [w, h, name] = devices[id];
+    const fig = document.createElement('figure');
+    fig.innerHTML = `<figcaption>${name} ${w}×${h}</figcaption><div class="frame" style="width:${w * scale}px;height:${h * scale}px"><iframe id="f-${id}" src="${path}" width="${w}" height="${h}" style="transform:scale(${scale})"></iframe></div>`;
+    document.getElementById('row').appendChild(fig);
+  }
+</script>
+</body>
+</html>

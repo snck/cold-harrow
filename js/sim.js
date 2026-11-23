@@ -2013,14 +2013,15 @@
   // ------------------------------------------------------------------ report
   function report(R) {
     const s = R.s;
-    const h = s.hist;
+    // the trail only: the finish-line lift would otherwise count as "coming back" from any low
+    const h = s.outcome && s.outcome.kind === 'finish' ? s.hist.slice(0, -1) : s.hist;
     let low = null, high = null;
     for (const p of h) { if (!low || p.morale < low.morale) low = p; }
     // biggest recovery after the low
     if (low) for (const p of h) if (p.t > low.t && (!high || p.morale > high.morale)) high = p;
     const legsDesc = Object.entries(s.legsBySec || {}).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => ({ where: k, dmg: Math.round(v) }));
     const tot = (stat) => Object.entries(s.tot[stat] || {}).filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]).slice(0, 5).map(([k, v]) => ({ cause: k, amt: Math.round(-v) }));
-    const plus = (stat) => Object.entries(s.tot[stat] || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => ({ cause: k, amt: Math.round(v) }));
+    const plus = (stat) => Object.entries(s.tot[stat] || {}).filter(([k, v]) => v > 0 && k !== 'the finish line').sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => ({ cause: k, amt: Math.round(v) }));
     return {
       outcome: s.outcome, low, high, legsDesc,
       moraleDrains: tot('morale'), moraleGains: plus('morale'), stomach: tot('stomach'),
