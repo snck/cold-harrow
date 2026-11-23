@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coldharrow</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============================== TITLE -->
+  <section id="screen-title" class="screen active">
+    <canvas id="title-canvas"></canvas>
+    <div class="title-card">
+      <h1>Coldharrow</h1>
+      <p class="tagline">100 kilometres. 4,500 metres of climbing. One night, one day.<br>It never always gets worse.</p>
+      <div class="title-buttons">
+        <button id="btn-continue" class="primary hidden">Continue race</button>
+        <button id="btn-new" class="primary">Enter the race</button>
+        <button id="btn-howto">How to play</button>
+      </div>
+      <div id="title-best" class="best"></div>
+      <p class="small dim">Mouse and keyboard. Nothing is timed: take as long as you like over every decision.</p>
+    </div>
+  </section>
+
+  <!-- ============================== HOW TO PLAY -->
+  <section id="screen-howto" class="screen">
+    <div class="paper">
+      <h2>How to play</h2>
+      <div class="howto-grid">
+        <div>
+          <h3>The race</h3>
+          <p><b>The Coldharrow Traverse</b>: 100 km, starting at midnight. Run through the night over a 2,140 m ridge, through a hot afternoon, and home to Lowmere. Aid stations have <b>cutoff times</b>; miss one and your race is over.</p>
+          <h3>Each section, you choose</h3>
+          <ul>
+            <li><b>Effort</b>: Walk, Easy, Steady or Push. On climbs that means <i>power-hiking</i> vs <i>running</i>; on descents, <i>cautious</i> vs <i>bombing it</i>. Every option shows what it will cost.</li>
+            <li><b>Fuel plan</b>: how much you eat from your vest each hour. Too little and you'll bonk hours from now. Too much and your stomach revolts.</li>
+            <li><b>Water</b>: drink to thirst, or ration it.</li>
+            <li><b>Quick actions</b>: jacket, salt, a gel, caffeine, and your <i>reasons</i>.</li>
+          </ul>
+          <p>Then you watch the section unfold. Things happen on the trail: weather, falls, other runners, your body and your mind. Each one stops and asks you what to do.</p>
+        </div>
+        <div>
+          <h3>Body and mind</h3>
+          <p><span class="chip body">Body</span> Energy, hydration, stomach, legs, feet, core temperature, alertness. Fix these with food, water, effort and kit.</p>
+          <p><span class="chip mind">Mind</span> <b>Morale</b> is how you feel right now. <b>Resolve</b> is your will to go on: it drains while you're in a dark place, and if it runs out you will stop. Company, views, sunrise, your reasons and fixing your body all help.</p>
+          <p><b>Hover over any bar</b> to see <i>why</i> it's moving.</p>
+          <h3>Consequences arrive late</h3>
+          <p>Bombing a descent feels great now. Your quads will tell you about it two hours later. Skipping food is free until it isn't. Plan ahead: the elevation profile at the bottom is always there, and you can hover over it.</p>
+          <h3>Aid stations</h3>
+          <p>Refill, eat, ice, sit, sleep, see the medic, open your drop bag. Every action costs time. You can also <b>hand in your bib</b>. Sometimes that's the right call.</p>
+          <p class="dim small">Keys: <b>1–4</b> effort · <b>Enter</b> go / continue · <b>Space</b> fast-forward · <b>Esc</b> menu · <b>M</b> sound</p>
+        </div>
+      </div>
+      <button class="primary back">Back</button>
+    </div>
+  </section>
+
+  <!-- ============================== BRIEFING -->
+  <section id="screen-brief" class="screen">
+    <div class="paper wide">
+      <h2>Race briefing: <span id="brief-weather"></span></h2>
+      <p id="brief-forecast" class="forecast"></p>
+      <canvas id="brief-profile" class="brief-profile"></canvas>
+      <div class="brief-cols">
+        <div>
+          <h3>Drop bags</h3>
+          <p class="small dim">Pick up to three items for each bag. You'll find them at the aid station, hours from now.</p>
+          <div class="dropbags">
+            <div><h4>Hollin Bridge <span class="dim">km 24 · in the night, before the big climb</span></h4><div id="drop-hollin" class="drop-list"></div></div>
+            <div><h4>Mill End <span class="dim">km 52 · halfway, before the heat</span></h4><div id="drop-mill" class="drop-list"></div></div>
+          </div>
+        </div>
+        <div>
+          <h3>Why are you here?</h3>
+          <p class="small dim">Choose three. When it gets dark (and it will), you can remember one of them. Each works once.</p>
+          <div id="reasons" class="reasons"></div>
+          <h3>Cutoffs</h3>
+          <table id="cutoffs" class="cutoffs"></table>
+        </div>
+      </div>
+      <div class="brief-foot">
+        <button class="back">Back</button>
+        <button id="btn-start" class="primary">To the start line</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== RACE -->
+  <section id="screen-race" class="screen">
+    <header id="hud">
+      <div class="hud-item big"><span id="hud-clock">00:00</span><label id="hud-elapsed">0:00 elapsed</label></div>
+      <div class="hud-item"><span id="hud-km">0.0</span><label>km of 100</label></div>
+      <div class="hud-item"><span id="hud-pos">-</span><label id="hud-field">position</label></div>
+      <div class="hud-item wide"><span id="hud-next">-</span><label id="hud-cut">next aid</label></div>
+      <div class="hud-item"><span id="hud-temp">-</span><label id="hud-wx">weather</label></div>
+      <div class="hud-spacer"></div>
+      <div class="hud-controls">
+        <button id="btn-speed" title="Animation speed">1×</button>
+        <button id="btn-sound" title="Sound (M)">♪</button>
+        <button id="btn-menu" title="Menu (Esc)">☰</button>
+      </div>
+    </header>
+    <div id="view">
+      <canvas id="land"></canvas>
+      <div id="moment" class="hidden"><div class="moment-inner"><h2></h2><p></p><div class="choices"></div></div></div>
+      <div id="playbar" class="hidden"><span id="play-label"></span><button id="btn-skip">Skip ▸▸ <span class="dim">(Space)</span></button></div>
+      <div id="tip" class="hidden"></div>
+    </div>
+    <div id="profile-wrap"><canvas id="profile"></canvas><div id="profile-tip" class="hidden"></div></div>
+    <div id="panel"></div>
+    <aside id="side">
+      <div class="side-group">
+        <h4>Body</h4>
+        <div id="bars-body"></div>
+      </div>
+      <div class="side-group">
+        <h4 class="mind-h">Mind</h4>
+        <div id="bars-mind"></div>
+      </div>
+      <div class="side-group" id="kit"></div>
+      <div class="side-group grow">
+        <h4>Race log</h4>
+        <div id="log"></div>
+      </div>
+    </aside>
+    <div id="bar-tip" class="hidden"></div>
+  </section>
+
+  <!-- ============================== REPORT -->
+  <section id="screen-report" class="screen">
+    <div class="paper wide report">
+      <div id="rep-head"></div>
+      <div class="chart-wrap"><canvas id="rep-chart"></canvas><div id="rep-legend" class="legend"></div></div>
+      <div class="rep-cols">
+        <div id="rep-moments"></div>
+        <div id="rep-why"></div>
+        <div id="rep-people"></div>
+      </div>
+      <div class="brief-foot">
+        <button id="btn-title">Title</button>
+        <button id="btn-same">Same conditions again</button>
+        <button id="btn-again" class="primary">Race again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== MODALS -->
+  <div id="modal" class="hidden"><div class="modal-card"></div></div>
+</div>
+
+<script src="js/course.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/render.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
