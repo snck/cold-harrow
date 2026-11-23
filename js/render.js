@@ -371,8 +371,18 @@
   P.init = function (canvas, onHover) {
     pcv = canvas; pctx = pcv.getContext('2d');
     P.resize();
-    pcv.addEventListener('mousemove', (e) => { const r = pcv.getBoundingClientRect(); hoverKm = clamp(((e.clientX - r.left) - 8) / (PW - 16) * 100, 0, 100); onHover && onHover(hoverKm, e); });
-    pcv.addEventListener('mouseleave', () => { hoverKm = null; onHover && onHover(null); });
+    const kmOf = (e) => { const r = pcv.getBoundingClientRect(); return clamp(((e.clientX - r.left) - 8) / (PW - 16) * 100, 0, 100); };
+    // mouse: hover. touch/pen: touch and drag to scrub; the tip stays until you tap elsewhere.
+    pcv.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' && !e.buttons && e.pressure === 0) return;
+      hoverKm = kmOf(e); onHover && onHover(hoverKm, e, e.pointerType !== 'mouse');
+    });
+    pcv.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') return;
+      try { pcv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      hoverKm = kmOf(e); onHover && onHover(hoverKm, e, true);
+    });
+    pcv.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') { hoverKm = null; onHover && onHover(null); } });
   };
   P.resize = function () {
     if (!pcv) return;

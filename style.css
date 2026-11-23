@@ -21,6 +21,17 @@ button { font: inherit; color: var(--ink); background: var(--panel2); border: 1p
 button:hover:not(:disabled) { border-color: #4a5a70; background: #222c3b; }
 button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { opacity: .45; cursor: not-allowed; }
+button, .bar, #profile, #land { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+#profile { touch-action: none; }
+/* touch: show what desktop puts in hover/title, hide keyboard hints */
+.qdesc { display: none; }
+.touch .qdesc { display: block; font-size: 10.5px; color: var(--dim); font-weight: 400; margin-top: 1px; }
+.touch .keys { display: none; }
+.sel-hint { display: none; }
+#sheet { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; }
+.sheet-card { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--line); border-bottom: 0; border-radius: 14px 14px 0 0; padding: 16px 18px calc(14px + env(safe-area-inset-bottom)); font-size: 14px; line-height: 1.5; box-shadow: 0 -10px 40px rgba(0,0,0,.5); }
+.sheet-card b { color: var(--accent2); }
+.sheet-close { width: 100%; margin-top: 12px; padding: 11px; }
 button.primary { background: var(--accent); color: #1a0f05; border-color: var(--accent); font-weight: 600; }
 button.primary:hover:not(:disabled) { background: #ffa161; }
 .hidden { display: none !important; }

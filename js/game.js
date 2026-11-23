@@ -6,6 +6,9 @@
   const $$ = (q, el) => Array.from((el || document).querySelectorAll(q));
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+  // Touch devices (or ?touch=1 for testing) get tap equivalents for everything that is hover on desktop.
+  const TOUCH = (window.matchMedia && matchMedia('(hover: none), (pointer: coarse)').matches) || /[?&]touch=1/.test(location.search);
+  document.documentElement.classList.toggle('touch', TOUCH);
 
   // ------------------------------------------------------------ storage (never required)
   const store = {
@@ -254,9 +257,10 @@
     $('#bars-body').innerHTML = BARS.body.map(mk).join('');
     $('#bars-mind').innerHTML = BARS.mind.map(mk).join('');
     $$('.bar').forEach((el) => {
-      el.addEventListener('mouseenter', (e) => barTip(el.dataset.k, e));
-      el.addEventListener('mousemove', (e) => placeTip($('#bar-tip'), e));
-      el.addEventListener('mouseleave', () => $('#bar-tip').classList.add('hidden'));
+      el.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') barTip(el.dataset.k, e); });
+      el.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') placeTip($('#bar-tip'), e); });
+      el.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') $('#bar-tip').classList.add('hidden'); });
+      el.addEventListener('click', (e) => { if (TOUCH || e.pointerType !== 'mouse') { $('#bar-tip').classList.add('hidden'); openSheet(barTipHtml(el.dataset.k)); } });
     });
   }
   function colourFor(v, mind) {
@@ -323,6 +327,11 @@
     resolve: 'Your will to go on. It drains while morale is very low. If it hits zero, you will stop on the trail.'
   };
   function barTip(k, e) {
+    const tip = $('#bar-tip');
+    tip.innerHTML = barTipHtml(k);
+    tip.classList.remove('hidden'); placeTip(tip, e);
+  }
+  function barTipHtml(k) {
     const s = app.R.s, b = s.b;
     let extra = '';
     const why = (stat) => {
@@ -340,10 +349,11 @@
     else if (k === 'legs') extra = (b.legsPending > 1 ? `<br><b>${Math.round(b.legsPending)} points of damage still arriving</b> from recent descents.` : '') + why('legs');
     else if (k === 'alert') extra = b.caffeine > 1 ? '<br>Caffeine kicking in.' : '';
     else if (k === 'morale' || k === 'resolve' || k === 'stomach' || k === 'feet') extra = why(k);
-    const tip = $('#bar-tip');
-    tip.innerHTML = `<b>${esc(k === 'hyd' ? 'Hydration' : k === 'heat' ? 'Core temperature' : k === 'alert' ? 'Alertness' : k[0].toUpperCase() + k.slice(1))}</b><br>${WHYTEXT[k]}${extra}`;
-    tip.classList.remove('hidden'); placeTip(tip, e);
+    return `<b>${esc(k === 'hyd' ? 'Hydration' : k === 'heat' ? 'Core temperature' : k === 'alert' ? 'Alertness' : k[0].toUpperCase() + k.slice(1))}</b><br>${WHYTEXT[k]}${extra}`;
   }
+  // bottom sheet: the touch replacement for hover tooltips
+  function openSheet(html) { $('#sheet .sheet-body').innerHTML = html; $('#sheet').classList.remove('hidden'); }
+  function closeSheet() { $('#sheet').classList.add('hidden'); }
   function placeTip(tip, e) {
     const w = tip.offsetWidth, h = tip.offsetHeight;
     let x = e.clientX - w - 16, y = e.clientY + 10;
@@ -351,7 +361,7 @@
     if (y + h > window.innerHeight - 8) y = window.innerHeight - h - 8;
     tip.style.left = x + 'px'; tip.style.top = y + 'px';
   }
-  function profileHover(km, e) {
+  function profileHover(km, e, touch) {
     const tip = $('#profile-tip');
     if (km == null) { tip.classList.add('hidden'); return; }
     const sec = C.SECTIONS[S.sectionIndexAt(Math.min(99.99, km))];
@@ -359,7 +369,13 @@
     for (let k = sec.from; k < sec.to - 1e-6; k += 0.1) { const dz = S.elevAt(k + 0.1) - S.elevAt(k); if (dz > 0) up += dz; else down -= dz; }
     const node = C.NODES.find((n) => Math.abs(n.km - km) < 0.8 && n.type !== 'start');
     tip.innerHTML = `<b>${esc(sec.name)}</b> · km ${sec.from}–${sec.to}<br>+${Math.round(up)} m / −${Math.round(down)} m · ${sec.kind}${sec.tech > 0.5 ? ', technical' : ''}${sec.exposed > 0.7 ? ', exposed' : ''}${sec.forest > 0.6 ? ', forest' : ''}<br><span class="dim">${esc(sec.text)}</span>${node ? `<br><b>${esc(node.name)}</b> (km ${node.km})${node.cutoff ? ' · cutoff ' + S.clockStr(node.cutoff) : ''}${node.dropBag ? ' · drop bag' : ''}${node.type === 'water' ? ' · water only' : ''}` : ''}`;
-    tip.classList.remove('hidden'); placeTip(tip, e);
+    tip.classList.remove('hidden');
+    if (touch) {
+      // pinned just above the strip, full width, so a finger doesn't cover it
+      const r = $('#profile-wrap').getBoundingClientRect();
+      tip.style.left = '8px'; tip.style.right = '8px'; tip.style.maxWidth = 'none';
+      tip.style.top = Math.max(8, r.top - tip.offsetHeight - 6) + 'px';
+    } else { tip.style.right = ''; tip.style.maxWidth = ''; placeTip(tip, e); }
   }
 
   // ------------------------------------------------------------ log
@@ -386,7 +402,7 @@
     const sec = C.SECTIONS[Math.min(C.SECTIONS.length - 1, S.sectionIndexAt(Math.min(99.99, app.view.km)))];
     const eff = S.effectiveEffort(s);
     $('#panel').innerHTML = `<div class="dec moving"><div class="dec-head"><div><h2>${esc(sec.name)}</h2><div class="sub">${esc(S.LABELS[S.sectionKindLabel(sec)][eff])} · fuel ${s.fuel}${s.ration ? ' · rationing water' : ''}${s.companion ? ' · with ' + esc(s.companion.name) : ''}</div></div></div>
-      <p class="sec-text dim">On the move. The race log on the right fills in as you go.</p></div>`;
+      <p class="sec-text dim">On the move. ${TOUCH ? 'Tap the scene to skip ahead.' : 'The race log on the right fills in as you go.'}</p></div>`;
     $('#playbar').classList.remove('hidden');
     $('#play-label').textContent = 'Running…';
   }
@@ -429,7 +445,7 @@
     const effHtml = d.options.map((o, i) => {
       const e = o.est;
       const dis = o.disabled ? 'disabled' : '';
-      return `<button class="effort ${app.sel === o.effort ? 'sel' : ''}" data-e="${o.effort}" ${dis} title="${esc(o.disabled || o.hint)}">
+      return `<button class="effort ${app.sel === o.effort ? 'sel' : ''}" data-e="${o.effort}" ${dis}>
         <span class="k">${i + 1}</span><b>${esc(o.label)}</b>
         ${o.companion ? `<span class="comp">with ${esc(o.companion)}</span>` : ''}
         <span class="tm">${S.durStr(e.minutes)} · arrive ${S.clockStr(e.arrive)}</span>
@@ -437,22 +453,27 @@
         ${riskLabel(e.fall)}
         <span class="hint">${esc(o.disabled || o.hint)}</span></button>`;
     }).join('');
-    const fuelBtns = ['none', 'light', 'steady', 'heavy'].map((p) => `<button class="${s.fuel === p ? 'on' : ''}" data-fuel="${p}" title="${{ none: 'Eat nothing', light: '~140 kcal per hour', steady: '~230 kcal per hour: about what a gut can absorb', heavy: '~360 kcal per hour: more than you can absorb' }[p]}">${p[0].toUpperCase() + p.slice(1)}</button>`).join('');
-    const quick = d.quick.map((q) => `<button class="${q.reason ? 'reason' : ''}" data-q="${q.id}" ${q.disabled ? 'disabled' : ''} title="${esc(q.desc || '')}">${esc(q.label)}</button>`).join('');
+    const FUELDESC = { none: 'eat nothing', light: '~140 kcal/h', steady: '~230 kcal/h, about what a gut can absorb', heavy: '~360 kcal/h, more than you can absorb' };
+    const fuelBtns = ['none', 'light', 'steady', 'heavy'].map((p) => `<button class="${s.fuel === p ? 'on' : ''}" data-fuel="${p}" title="${FUELDESC[p]}">${p[0].toUpperCase() + p.slice(1)}</button>`).join('');
+    const quick = d.quick.map((q) => `<button class="${q.reason ? 'reason' : ''}" data-q="${q.id}" ${q.disabled ? 'disabled' : ''} title="${esc(q.desc || '')}">${esc(q.label)}${q.desc ? `<small class="qdesc">${esc(q.desc)}</small>` : ''}</button>`).join('');
+    const selOpt = d.options.find((o) => o.effort === app.sel) || d.options[2];
     const forced = d.forcedWalk ? `<span class="forced">${s.flags.committedDNF ? 'You are walking to the next aid station to drop.' : s.inj.ankle >= 3 ? 'You can only hobble.' : 'You have to walk for a few minutes.'}</span>` : '';
     $('#panel').innerHTML = `<div class="dec section">
       <div class="dec-head"><div><h2>${esc(sec.name)}</h2><div class="sub">km ${s.km.toFixed(1)} → ${sec.to} · ${sec.kind} · +${Math.round(up)} m / −${Math.round(down)} m${sec.tech > 0.5 ? ' · technical' : ''}${sec.exposed > 0.7 ? ' · exposed' : ''} · ${env.dark ? 'dark' : 'daylight'}, ${Math.round(env.air)}°C</div></div><div class="proj">${projHtml}</div></div>
       ${intro}
       <div class="efforts">${effHtml}</div>
+      <p class="sel-hint">${esc(selOpt.disabled || selOpt.hint)}</p>
       <div class="plans">
-        <div class="seg"><label>Fuel plan</label>${fuelBtns}<span class="note">${Math.round(s.kit.food)} kcal in vest</span></div>
+        <div class="seg"><label>Fuel plan</label>${fuelBtns}<span class="note">${FUELDESC[s.fuel]} · ${Math.round(s.kit.food)} kcal in vest</span></div>
         <div class="seg"><label>Water</label><button class="${!s.ration ? 'on' : ''}" data-r="0">Drink to thirst</button><button class="${s.ration ? 'on' : ''}" data-r="1">Ration</button><span class="note">${s.kit.water.toFixed(1)} L</span></div>
       </div>
       <div class="quick"><label>Now</label>${quick}</div>
-      <div class="go-row">${forced}<span class="note">Enter to go</span><button class="primary go">${d.fresh ? 'Go' : 'Continue'} ▶</button></div>
+      <div class="go-row">${forced}<span class="note keys">Enter to go</span><button class="primary go">${d.fresh ? 'Go' : 'Continue'} ▶</button></div>
     </div>`;
-    $$('.effort').forEach((b) => b.onclick = () => { app.sel = b.dataset.e; $$('.effort').forEach((x) => x.classList.toggle('sel', x === b)); AU.cue('click'); });
-    $$('.effort').forEach((b) => b.ondblclick = () => go());
+    $$('.effort').forEach((b) => b.onclick = () => {
+      app.sel = b.dataset.e; $$('.effort').forEach((x) => x.classList.toggle('sel', x === b)); AU.cue('click');
+      const o = d.options.find((x) => x.effort === app.sel); $('.sel-hint').textContent = o.disabled || o.hint;
+    });
     $$('[data-fuel]').forEach((b) => b.onclick = () => { act({ type: 'fuel', plan: b.dataset.fuel }); });
     $$('[data-r]').forEach((b) => b.onclick = () => { act({ type: 'ration', on: b.dataset.r === '1' }); });
     $$('[data-q]').forEach((b) => b.onclick = () => { act({ type: 'quick', id: b.dataset.q }); });
@@ -515,7 +536,7 @@
     for (const a of d.actions) (byG[a.group] = byG[a.group] || []).push(a);
     const actHtml = Object.entries(groups).filter(([g]) => byG[g]).map(([g, name]) => `<div class="aid-group"><label>${name}</label>${byG[g].map((a) => {
       const maxed = a.max && a.count >= a.max;
-      return `<button class="aid-act ${a.done || maxed ? 'done' : ''}" data-a="${esc(a.id)}" ${maxed || (a.done && !a.max) ? 'disabled' : ''} title="${esc(a.desc || '')}">${esc(a.label)}<span class="t">${a.time} min</span>${a.count ? `<span class="c">×${a.count}</span>` : ''}</button>`;
+      return `<button class="aid-act ${a.done || maxed ? 'done' : ''}" data-a="${esc(a.id)}" ${maxed || (a.done && !a.max) ? 'disabled' : ''} title="${esc(a.desc || '')}">${esc(a.label)}<span class="t">${a.time} min</span>${a.count ? `<span class="c">×${a.count}</span>` : ''}${a.desc ? `<small class="qdesc">${esc(a.desc)}</small>` : ''}</button>`;
     }).join('')}</div>`).join('');
     let cut = '';
     if (n.cutoff) {
@@ -684,7 +705,9 @@
 
   // ------------------------------------------------------------ tips (first race)
   const TIPS = {
-    effort: '<b>Pick an effort for this section</b> (1–4), then press <b>Go</b>. Each card shows the time and what it costs. Most finishers power-hike the climbs and take technical descents cautiously.<br><br><b>Hover over the body and mind bars</b> on the right to see why they are moving, and hover over the profile below to look ahead.',
+    effort: TOUCH
+      ? '<b>Pick an effort for this section</b>, then tap <b>Go</b>. Each card shows the time and what it costs. Most finishers power-hike the climbs and take technical descents cautiously.<br><br><b>Tap any body or mind bar</b> to see why it is moving. <b>Touch and drag the elevation strip</b> to look ahead.'
+      : '<b>Pick an effort for this section</b> (1–4), then press <b>Go</b>. Each card shows the time and what it costs. Most finishers power-hike the climbs and take technical descents cautiously.<br><br><b>Hover over the body and mind bars</b> on the right to see why they are moving, and hover over the profile below to look ahead.',
     aid: '<b>Aid station.</b> Every action costs minutes, and the cutoff is real. Refill your flasks, restock your vest, eat something, and get out. Or sit down. You decide.'
   };
   function maybeTip(id) {
@@ -751,6 +774,12 @@
     $('#btn-same').onclick = () => openBriefing(app.R.s.seed);
     $('#btn-title').onclick = () => show('title');
     $('#btn-skip').onclick = () => { if (app.play) app.play.t = app.play.tEnd; };
+    $('#land').addEventListener('click', () => { if (app.play) app.play.t = app.play.tEnd; }); // tap the scene to skip ahead (never makes a choice)
+    $('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet' || e.target.classList.contains('sheet-close')) closeSheet(); });
+    document.addEventListener('pointerdown', (e) => {
+      AU.unlock(); // iOS suspends audio until a gesture
+      if (!e.target.closest || !e.target.closest('#profile-wrap')) $('#profile-tip').classList.add('hidden');
+    }, { passive: true });
     $('#btn-speed').onclick = cycleSpeed;
     $('#btn-speed').textContent = app.speed + '×';
     $('#btn-sound').onclick = () => { AU.toggle(); store.set('sound', AU.enabled); $('#btn-sound').style.opacity = AU.enabled ? 1 : 0.4; };
