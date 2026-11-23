@@ -278,7 +278,7 @@ button.dnf.tempt { background: rgba(255,107,94,.15); border-color: var(--bad); c
 .compact .modal-card .row button { flex: 1; }
 
 /* --- race screen pieces */
-.compact #hud { gap: 0; padding: env(safe-area-inset-top) calc(6px + env(safe-area-inset-right)) 0 calc(6px + env(safe-area-inset-left)); min-height: 46px; }
+.compact #hud { gap: 0; padding: env(safe-area-inset-top) calc(6px + env(safe-area-inset-right)) 0 calc(6px + env(safe-area-inset-left)); min-height: 48px; }
 .compact .hud-item { padding: 0 8px; min-width: 0; }
 .compact .hud-item span { font-size: 14px; }
 .compact .hud-item.big span { font-size: 16px; }
@@ -289,7 +289,7 @@ button.dnf.tempt { background: rgba(255,107,94,.15); border-color: var(--bad); c
 .compact #hud-wx-item, .compact .hud-spacer, .compact #btn-speed, .compact #btn-sound, .compact #hud-elapsed { display: none; }
 .compact #btn-log { display: inline-block; }
 .compact .hud-controls { gap: 4px; }
-.compact .hud-controls button { min-height: 36px; padding: 4px 9px; }
+.compact .hud-controls button { min-height: 40px; min-width: 42px; padding: 4px 10px; }
 
 /* vitals: all nine bars as a compact tappable grid */
 .compact #side { border-left: 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 10px; padding: 6px 10px 7px; overflow: visible; }

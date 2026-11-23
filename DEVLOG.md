@@ -200,3 +200,42 @@ The finish is the biggest moment in the game: sky flash, bells, morale and resol
 * **Sound** is procedural and minimal (wind, rain, footsteps, birds, chords for moments, bells at the finish). I verified it runs without errors in the browser, but I couldn't listen to it, so its mix is reasoned rather than tuned by ear.
 * One race only, with three weather variants. More courses would help replay, but I preferred to make one course a character.
 * Desktop only (as required). Narrow windows are usable but cramped.
+
+## Round 7: phones and tablets
+
+Goal: make the game work in mobile browsers, upright first and sideways too, down to 360px-wide phones, and installable as an offline app. The rules didn't change.
+
+**What was wrong on a phone**
+1. The race screen was a fixed desktop grid (a 300px sidebar, ~600px minimum height). On a 375px phone the scene was a sliver.
+2. Most of the game's readability was **hover-only**: the "why is this bar moving" tooltips, looking ahead on the elevation profile, and button hints in `title` attributes.
+3. The landscape redrew at 60 fps even while the game was waiting on a decision, and kept going in the background.
+4. Smaller issues: double-tap to go clashed with double-tap zoom, tap targets were 26px, and iOS suspends audio until a gesture.
+
+**What I changed** (one commit per step)
+1. **Touch equivalents.** Tap a bar to open a bottom sheet. Touch and drag the elevation strip to scrub, with its tip pinned above the strip. Visible hints on touch. Tap the scene to skip the animation. Audio resumes on each tap.
+2. **Layouts.** A `compact` mode with an upright stack, a sideways split, a Log drawer, full-screen moments, and single-column briefing, report and How to play. The drop bags became a two-column grid with the tapped item described. Labels are dropped where they can't fit.
+3. **Battery.** About 15 fps while idle, full rate while animating, nothing when hidden. The game saves whenever the page is hidden.
+4. **Installable.** Manifest, generated icons, network-first service worker (HTTPS or localhost only), an Install button where the browser offers one, and an "Add to Home Screen" hint on iOS Safari.
+
+**Problems found while testing, all fixed**
+* The top-bar "next aid" item was squeezed to zero width by a long position label. On phones it now reads "of 141", and the aid reads "10.0 km · Hollin Bridge".
+* Each bar's value fell onto a third grid row (implicit placement), wasting height. It's now placed explicitly, and the vitals grid went from 114px to 76px.
+* An iPhone SE held sideways (667px wide) matched the *upright* rule and left a 69px decision panel. Orientation now decides the layout, not width alone.
+* The full-screen moment overlay let the bars show through behind its text on phones. It's now nearly opaque.
+* The race report said "by km 100 you'd come all the way back": the finish-line lift was counted as a recovery, the same mistake I'd fixed in the headless metric in round 6. It also listed "the finish line (100)" first under "What carried you". Both are fixed in `report()`.
+* The report chart's km labels collided at 375px, and the briefing's elevation labels piled up. Narrow widths now show fewer labels.
+* Top-bar buttons were 36px; now 40px.
+
+**How I checked it**
+* `tools/devices.html` shows the game in iframes at real phone and tablet sizes, because the preview browser's viewport can't be resized reliably. Each iframe has its own media queries.
+* At 360×740 upright I audited the title, How to play, briefing, start moment, a section decision, the bar sheet, the Log drawer, the pause menu, an aid station, the DNF dialog, a full race to the finish, and the report. On every screen there was **no sideways overflow and no button under 40px**. The same audit passed at 667×375 sideways.
+* I played full races in the iPhone SE frame to the finish moment and report.
+* Desktop at 1280×800 is unchanged.
+* Idle redraw rate measured at 15 fps (was ~60).
+* Offline: with the service worker active and all 13 files cached, I **stopped the server** and reloaded. The game loaded and a race started from the cache.
+* `npm test`: 18/18 passing (the rules are unchanged).
+
+**Known limits**
+* I checked layouts in iframes sized like real devices, not on physical phones. Real-device quirks remain untested: iOS Safari's collapsing address bar, the on-screen keyboard (the game has no text input), and how notches and home indicators behave in practice.
+* Touch mode is detected with `(hover: none), (pointer: coarse)`. A touchscreen laptop with a mouse gets the mouse behaviour. Tapping still works there, but the hint text stays hidden.
+* The install prompt and offline cache need the game served over HTTPS. I haven't deployed it anywhere.

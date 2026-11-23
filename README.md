@@ -29,6 +29,24 @@ a tiny static server in `tools/serve.js`.)
 Your progress is saved in the browser as you play, so you can close the tab and
 choose **Continue race** later.
 
+### On a phone or tablet
+
+Coldharrow works in mobile browsers, held upright or sideways, on screens from
+360px wide. Everything you'd hover over on a desktop is a tap: tap a bar to see
+why it's moving, touch and drag the elevation strip to look ahead, tap the scene
+to skip the animation. The race log and kit are behind the **Log** button.
+
+To install it as an app (full screen, its own icon, works offline), the game has
+to be served over **HTTPS**. Any static host works, for example GitHub Pages:
+copy the repository's files as they are; there is no build. Then:
+* **Android / Chrome**: tap **Install** on the title screen (or the browser's
+  install prompt).
+* **iPhone / iPad Safari**: tap **Share**, then **Add to Home Screen**.
+
+After the first visit it plays offline. Opening `index.html` from disk still
+works, but without the offline cache (browsers only allow that over HTTPS or
+localhost).
+
 ## How to play
 
 1. **Briefing.** Read the forecast. Pack your two drop bags (km 24, in the night,
@@ -52,8 +70,8 @@ choose **Continue race** later.
 
 **Body**: energy, hydration, stomach, legs, feet, core temperature,
 alertness. **Mind**: morale (how you feel now) and resolve (your will to go on).
-**Hover over any bar to see why it's moving.** Hover over the elevation profile
-to look ahead.
+**Hover over (or tap) any bar to see why it's moving.** Hover over the
+elevation profile (or touch and drag it) to look ahead.
 
 Keys: **1–4** effort · **Enter** go / continue · **Space** fast-forward · **Esc**
 pause menu · **M** sound.
@@ -71,7 +89,13 @@ npm test                                   # rules tests + random-play fuzz (nod
 node tools/headless.js                     # play 60 races per scripted strategy, print a table
 node tools/headless.js --n 200 --only sensible,typical
 node tools/headless.js --trace typical --seed 7 [--csv out.csv]   # one race: curves, log, causes
+npm run icons                              # regenerate the app icons in icons/
 ```
+
+To check layouts, run `npm run dev` and open
+<http://localhost:5173/tools/devices.html>. It shows the game at several phone
+and tablet sizes at once (`?only=se,se-land&scale=0.6` to pick). Add `?touch=1`
+to the game URL to force touch mode in a desktop browser.
 
 | File | What it is |
 |---|---|
@@ -82,6 +106,9 @@ node tools/headless.js --trace typical --seed 7 [--csv out.csv]   # one race: cu
 | `js/game.js` | Screens, playback animation, decision panels, aid stations, tooltips, save/continue, report |
 | `tools/headless.js` | Scripted strategies and the balance table |
 | `tests/sim.test.js` | Rules tests |
+| `sw.js`, `manifest.webmanifest`, `icons/` | Installable app: offline cache, home-screen metadata, icons |
+| `tools/make-icons.js` | Draws the icons (no dependencies) |
+| `tools/devices.html` | Dev page: the game at several device sizes at once |
 
 `DESIGN.md` has the design. `DEVLOG.md` has the iteration history and the
 self-assessment.

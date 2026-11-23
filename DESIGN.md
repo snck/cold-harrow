@@ -268,6 +268,26 @@ headless playtester (`tools/headless.js`) and the tests (`node --test`).
 Canvas 2D does the landscape. WebAudio procedural sound needs no asset files.
 `npm run dev` starts a zero-dependency static server for anyone who prefers it.
 
+### Phones and tablets
+The game is played on desktop, tablet and phone, upright or sideways, down to
+360px wide. The simulation is identical everywhere; only presentation changes.
+* **Touch replaces hover.** Tapping a bar opens a bottom sheet with the same
+  explanation and recent causes. Touching and dragging the elevation strip
+  scrubs the course. Button hints become visible text. Tapping the scene skips
+  the animation; it never makes a choice.
+* **Compact layouts** (a `compact` class set from JS for phone-sized screens).
+  Upright: a one-line top bar, the scene, the elevation strip, a 3×3 grid of
+  the nine body and mind bars, then the decision panel with its main button
+  pinned. Sideways: scene on the left, bars and decisions on the right. The
+  race log and kit live in a drawer. Big moments take the whole screen.
+  Tablets and desktops keep the original layout.
+* **Battery and lifecycle.** Full frame rate only while animating; about 15 fps
+  while waiting on a decision; nothing when hidden. The race is saved whenever
+  the page is hidden, because phones kill background tabs.
+* **Installable.** A manifest and icons, plus a network-first offline cache
+  (`sw.js`) that only switches on over HTTPS or localhost, so opening
+  `index.html` from disk keeps working.
+
 ## Headless verification (summary; full numbers in DEVLOG)
 
 80 races per strategy:
