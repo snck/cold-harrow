@@ -11,6 +11,9 @@ climb in the afternoon heat, and get home to the village of Lowmere before the
 A race takes about 30–45 minutes to play. **Nothing is timed.** Every decision
 waits for you as long as you like.
 
+**Play it now: <https://snck.github.io/cold-harrow/>** (desktop, tablet or phone;
+installable, and works offline after the first visit).
+
 ## Running it
 
 **Option 1 (no install):** open `index.html` in a desktop browser (Chrome,
