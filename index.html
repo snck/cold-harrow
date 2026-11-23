@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Coldharrow</title>
+<meta name="description" content="A trail running game about one long night and one long day on a mountain.">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Coldharrow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,8 +28,10 @@
         <button id="btn-continue" class="primary hidden">Continue race</button>
         <button id="btn-new" class="primary">Enter the race</button>
         <button id="btn-howto">How to play</button>
+        <button id="btn-install" class="hidden">Install</button>
       </div>
       <div id="title-best" class="best"></div>
+      <p id="install-hint" class="small dim hidden"></p>
       <p class="small dim" id="title-input">Mouse and keyboard. Nothing is timed: take as long as you like over every decision.</p>
     </div>
   </section>

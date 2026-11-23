@@ -824,6 +824,33 @@
     show('title');
     requestAnimationFrame(tick);
   }
+  // ------------------------------------------------------------ installable app
+  function setupInstall() {
+    const standalone = (window.matchMedia && matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches) || navigator.standalone;
+    // offline cache: only over https or localhost (service workers never run from a file on disk)
+    const okOrigin = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if ('serviceWorker' in navigator && okOrigin) navigator.serviceWorker.register('sw.js').catch(() => { /* the game works without it */ });
+    if (standalone) return;
+    // Android / desktop Chromium: a real install prompt
+    let deferred = null;
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; $('#btn-install').classList.remove('hidden'); });
+    $('#btn-install').onclick = async () => {
+      if (!deferred) return;
+      deferred.prompt();
+      try { await deferred.userChoice; } catch (err) { /* ignore */ }
+      deferred = null; $('#btn-install').classList.add('hidden');
+    };
+    window.addEventListener('appinstalled', () => $('#btn-install').classList.add('hidden'));
+    // iPhone / iPad Safari: no prompt exists, so say how
+    const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (iOS && okOrigin) {
+      const h = $('#install-hint');
+      h.textContent = 'To play full screen: tap Share, then "Add to Home Screen".';
+      h.classList.remove('hidden');
+    }
+  }
+
   window.ColdharrowApp = app; // for debugging / automated checks
+  setupInstall();
   wire();
 })();
